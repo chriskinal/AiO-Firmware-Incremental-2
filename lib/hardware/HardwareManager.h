@@ -1,5 +1,5 @@
 // HardwareManager.h
-// Phase 1: Hardware Abstraction and Setup
+// Header file for Phase 1 Hardware Abstraction
 
 #ifndef HARDWARE_MANAGER_H
 #define HARDWARE_MANAGER_H
@@ -12,71 +12,78 @@
 namespace HardwarePins
 {
     // Built-in LED
-    const uint8_t LED_BUILTIN_PIN = 13;
+    constexpr uint8_t LED_BUILTIN_PIN = 13;
 
     // Status LEDs
-    const uint8_t STATUS_LED_PIN = 2;
+    constexpr uint8_t STATUS_LED_PIN = 2;
 
     // Switch inputs
-    const uint8_t WORK_SWITCH_PIN = 3;
-    const uint8_t STEER_SWITCH_PIN = 4;
+    constexpr uint8_t WORK_SWITCH_PIN = 3;
+    constexpr uint8_t STEER_SWITCH_PIN = 4;
 
     // Analog inputs
-    const uint8_t WAS_SENSOR_PIN = A0;
-    const uint8_t PRESSURE_SENSOR_PIN = A1;
-    const uint8_t CURRENT_SENSOR_PIN = A2;
+    constexpr uint8_t WAS_SENSOR_PIN = A0;
+    constexpr uint8_t PRESSURE_SENSOR_PIN = A1;
+    constexpr uint8_t CURRENT_SENSOR_PIN = A2;
 
     // PWM outputs
-    const uint8_t MOTOR_PWM_1_PIN = 5;
-    const uint8_t MOTOR_PWM_2_PIN = 6;
-    const uint8_t MOTOR_DIR_PIN = 7;
+    constexpr uint8_t MOTOR_PWM_1_PIN = 5;
+    constexpr uint8_t MOTOR_PWM_2_PIN = 6;
+    constexpr uint8_t MOTOR_DIR_PIN = 7;
 
     // I2C pins (Wire)
-    const uint8_t SDA_PIN = 18;
-    const uint8_t SCL_PIN = 19;
+    constexpr uint8_t SDA_PIN = 18;
+    constexpr uint8_t SCL_PIN = 19;
 
     // SPI pins for Ethernet
-    const uint8_t MOSI_PIN = 11;
-    const uint8_t MISO_PIN = 12;
-    const uint8_t SCK_PIN = 13;
-    const uint8_t CS_ETHERNET_PIN = 10;
-
-    // Serial ports
-    // Serial1: GPS (pins 0,1)
-    // Serial2: RTK Radio (pins 7,8)
-    // Serial3: ESP32 (pins 15,14)
-    // Serial4: RS232 (pins 16,17)
+    constexpr uint8_t MOSI_PIN = 11;
+    constexpr uint8_t MISO_PIN = 12;
+    constexpr uint8_t SCK_PIN = 13;
+    constexpr uint8_t CS_ETHERNET_PIN = 10;
 }
+
+// Hardware status structure
+struct HardwareStatus
+{
+    bool hardware_initialized;
+    bool i2c_ready;
+    bool spi_ready;
+    uint32_t i2c_frequency;
+    uint32_t pwm_frequency;
+    uint8_t i2c_device_count;
+    bool led_state;
+};
 
 class HardwareManager
 {
 private:
-    bool hardware_initialized = false;
-    bool i2c_initialized = false;
-    bool spi_initialized = false;
-
-    // PWM frequency settings
-    uint32_t pwm_frequency = 1000; // 1kHz default
-
-    // I2C settings
-    uint32_t i2c_frequency = 400000; // 400kHz
+    // Configuration
+    static constexpr uint32_t DEFAULT_I2C_FREQUENCY = 400000; // 400kHz
+    static constexpr uint32_t DEFAULT_PWM_FREQUENCY = 1000;   // 1kHz
 
     // Status tracking
-    bool led_state = false;
-    uint32_t last_heartbeat = 0;
+    bool hardware_initialized;
+    bool i2c_initialized;
+    bool spi_initialized;
+    uint32_t i2c_frequency;
+    uint32_t pwm_frequency;
+    bool led_state;
+    uint32_t last_heartbeat;
+    uint8_t i2c_device_count;
 
-public:
-    HardwareManager();
-
-    // Initialize all hardware
-    bool begin();
-
-    // Individual hardware initialization
+    // Private helper methods
     bool initializePins();
     bool initializeI2C();
     bool initializeSPI();
     bool initializeSerial();
     bool initializePWM();
+
+public:
+    // Constructor
+    HardwareManager();
+
+    // Initialization
+    bool begin();
 
     // Pin control methods
     void setPin(uint8_t pin, bool state);
@@ -97,24 +104,21 @@ public:
 
     // PWM configuration
     void setPWMFrequency(uint32_t frequency);
-    uint32_t getPWMFrequency() const { return pwm_frequency; }
+    uint32_t getPWMFrequency() const;
 
     // Hardware status
-    bool isInitialized() const { return hardware_initialized; }
-    bool isI2CReady() const { return i2c_initialized; }
-    bool isSPIReady() const { return spi_initialized; }
+    bool isInitialized() const;
+    bool isI2CReady() const;
+    bool isSPIReady() const;
+    HardwareStatus getStatus() const;
 
-    // Diagnostics
+    // Diagnostics and testing
     void printHardwareStatus();
     void runHardwareTest();
+    void testSensors();
 
-    // Power management
-    void enablePeripheral(const char *peripheral);
-    void disablePeripheral(const char *peripheral);
-
-    // Reset functions
+    // System control
     void softReset();
-    void watchdogReset();
 };
 
 #endif // HARDWARE_MANAGER_H

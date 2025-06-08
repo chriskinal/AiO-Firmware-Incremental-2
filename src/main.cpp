@@ -4,9 +4,11 @@
 #include "Arduino.h"
 #include "mongooseStart.h"
 #include "ConfigManager.h"
+#include "HardwareManager.h"
 
-// Global ConfigManager instance
+// Global instances
 ConfigManager configManager;
+HardwareManager hardwareManager;
 
 // Phase 1 placeholders - will be replaced with actual classes later
 bool phase1_initialized = false;
@@ -90,8 +92,15 @@ void initializePhase1()
                 netConfig.ip[0], netConfig.ip[1],
                 netConfig.ip[2], netConfig.ip[3]);
 
-  // Other managers still placeholders
-  Serial.println("- HardwareManager: Ready (placeholder)");
+  // Initialize real HardwareManager
+  if (!hardwareManager.begin())
+  {
+    Serial.println("ERROR: HardwareManager initialization failed!");
+    phase1_initialized = false;
+    return;
+  }
+
+  // DiagnosticManager still placeholder
   Serial.println("- DiagnosticManager: Ready (placeholder)");
 
   phase1_initialized = true;
@@ -136,6 +145,23 @@ void handleDebugCommands()
   {
     configManager.printConfiguration();
   }
+  else if (command == "hardware")
+  {
+    hardwareManager.printHardwareStatus();
+  }
+  else if (command == "hwtest")
+  {
+    hardwareManager.runHardwareTest();
+  }
+  else if (command == "sensors")
+  {
+    hardwareManager.testSensors();
+  }
+  else if (command == "scan")
+  {
+    hardwareManager.scanI2C();
+    hardwareManager.scanI2C();
+  }
   else if (command == "defaults")
   {
     Serial.println("Resetting configuration to defaults...");
@@ -174,6 +200,10 @@ void printHelpMenu()
   Serial.println("=== Phase 1 Debug Commands ===");
   Serial.println("status   - Show system status");
   Serial.println("config   - Show configuration");
+  Serial.println("hardware - Show hardware status");
+  Serial.println("hwtest   - Run safe hardware test");
+  Serial.println("sensors  - Test analog sensors (may reset)");
+  Serial.println("scan     - Scan I2C bus");
   Serial.println("defaults - Reset config to defaults");
   Serial.println("save     - Save config to EEPROM");
   Serial.println("test     - Run basic test");
