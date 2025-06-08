@@ -3,6 +3,10 @@
 
 #include "Arduino.h"
 #include "mongooseStart.h"
+#include "ConfigManager.h"
+
+// Global ConfigManager instance
+ConfigManager configManager;
 
 // Phase 1 placeholders - will be replaced with actual classes later
 bool phase1_initialized = false;
@@ -72,9 +76,21 @@ void initializePhase1()
 {
   Serial.println("Phase 1: Initializing Core Infrastructure...");
 
-  // Phase 1 placeholder initialization
-  // TODO: Replace with actual ConfigManager, HardwareManager, DiagnosticManager
-  Serial.println("- ConfigManager: Ready (placeholder)");
+  // Initialize real ConfigManager
+  if (!configManager.begin())
+  {
+    Serial.println("ERROR: ConfigManager initialization failed!");
+    phase1_initialized = false;
+    return;
+  }
+
+  // Show loaded configuration
+  const NetworkConfig &netConfig = configManager.getNetworkConfig();
+  Serial.printf("ConfigManager: Loaded IP %d.%d.%d.%d\n",
+                netConfig.ip[0], netConfig.ip[1],
+                netConfig.ip[2], netConfig.ip[3]);
+
+  // Other managers still placeholders
   Serial.println("- HardwareManager: Ready (placeholder)");
   Serial.println("- DiagnosticManager: Ready (placeholder)");
 
@@ -116,6 +132,21 @@ void handleDebugCommands()
     }
     Serial.println("LED test complete");
   }
+  else if (command == "config")
+  {
+    configManager.printConfiguration();
+  }
+  else if (command == "defaults")
+  {
+    Serial.println("Resetting configuration to defaults...");
+    configManager.resetToDefaults();
+    Serial.println("Configuration reset complete. System will use new settings on next boot.");
+  }
+  else if (command == "save")
+  {
+    configManager.saveAll();
+    Serial.println("Configuration saved to EEPROM");
+  }
   else if (command == "phase1")
   {
     Serial.printf("Phase 1 Status: %s\n", phase1_initialized ? "Active" : "Inactive");
@@ -141,11 +172,14 @@ void handleDebugCommands()
 void printHelpMenu()
 {
   Serial.println("=== Phase 1 Debug Commands ===");
-  Serial.println("status  - Show system status");
-  Serial.println("test    - Run basic test");
-  Serial.println("phase1  - Show Phase 1 status");
-  Serial.println("reset   - Reset system");
-  Serial.println("help    - Show this menu");
+  Serial.println("status   - Show system status");
+  Serial.println("config   - Show configuration");
+  Serial.println("defaults - Reset config to defaults");
+  Serial.println("save     - Save config to EEPROM");
+  Serial.println("test     - Run basic test");
+  Serial.println("phase1   - Show Phase 1 status");
+  Serial.println("reset    - Reset system");
+  Serial.println("help     - Show this menu");
   Serial.println("==============================");
 }
 
